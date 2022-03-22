@@ -1,0 +1,123 @@
+name: PHP_CodeSniffer
+description: |
+  Lint PHP with PHP_CodeSniffer
+
+inputs:
+  standard:
+    description: 'The name or path of the coding standard to use'
+    default: './phpcs.xml'
+    required: true
+  ignore:
+    description: 'Comma delimited list of files to ignore'
+    default: 'vendor'
+    required: true
+  extensions:
+    default: 'php'
+    description: 'Comma delimited list of extensions to lint'
+    required: true
+  paths:
+    description: 'Space delimited list of paths to lint. Not used when only-changed-files is enabled.'
+    default: '.'
+    required: true
+  report-name:
+    description: The name of the archived report. It must follow the convention detailed by our ADRs.
+    required: true
+    default: phpcs.junit.xml
+  report-retention-days:
+    description: "Duration in days to preserve reports."
+    required: false
+    default: "5"
+  extra-args:
+    description: Extra arguments to pass to the phpcs binary
+    required: false
+  default-branch:
+    description: "Default branch to compute changed files"
+    required: true
+    default: "main"
+  only-changed-files:
+    description: |
+      Run phpcs only on changed files compared to master. Or previous commit for master branch.
+    required: false
+    default: false
+  changed-files-pattern:
+    description: File path pattern.
+    default: \.php
+    required: true
+  changed-files-threshold:
+    description: If changed file count is greater than this number, perform a full phpcs.
+    default: '150'
+    required: true
+  working-directory:
+    description: "Workflow working directory"
+    default: '.'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: phpcs
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: |
+        command_string=(./vendor/bin/phpcs -s --standard=${{ inputs.standard }} --ignore=${{ inputs.ignore }} --extensions=${{ inputs.extensions }} --report-file=${{ inputs.working-directory }}/reports/${{ inputs.report-name }})
+
+        if [ -n "${{ inputs.extra-args }}" ]
+        then
+          command_string+=(${{ inputs.extra-args }})
+        fi
+
+        if [[ "${{ inputs.only-changed-files }}" == "yes" ]] ; then
+          CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+          if [[ "$CURRENT_BRANCH" == "${{ inputs.default-branch }}" ]] ; then
+            echo "Running phpcs on all files"
+          else
+            # Compute changed files
+            if [[ -n "${GITHUB_BASE_REF}" ]]; then
+              DIFF_TARGET="origin/$GITHUB_BASE_REF..."
+            else
+              DIFF_TARGET="origin/${{ inputs.default-branch }}..."
+            fi
+
+            # Allow to fail early if DIFF_TARGET not found on repo
+            git rev-parse $DIFF_TARGET > /dev/null 2>&1 || { echo "Diff target not found '$DIFF_TARGET'. You probably miss a git fetch step." > /dev/stderr; exit 1; }
+
+            # Get changed files which match the pattern.
+            # NOTE:
+            # `|| :` is used to avoid exit by grep, when no line matches the pattern.
+            CHANGED_FILES=$(git diff $DIFF_TARGET --diff-filter=AM --name-only --no-color | grep -e "${{ inputs.changed-files-pattern }}" || :)
+            NUM_CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -v -e '^\s*$' | wc -l || :)
+            if [[ $NUM_CHANGED_FILES -le 0 ]] ; then
+              echo "No file changes. Skip psalm."
+              exit 0
+            elif [[ $NUM_CHANGED_FILES -le ${{ inputs.changed-files-threshold }} ]] ; then
+              echo "Running phpcs on changed files"
+              echo "$CHANGED_FILES"
+              command_string+=($CHANGED_FILES)
+            else
+              echo "Running psalm on all files"
+              command_string+=(${{ inputs.paths }})
+            fi
+          fi
+        else
+          command_string+=(${{ inputs.paths }})
+        fi
+
+        echo "Command: " "${command_string[@]}"
+        ${command_string[@]}
+
+    - name: Upload report
+      uses: actions/upload-artifact@v2
+      if: "!cancelled()"
+      with:
+        name: ${{ inputs.report-name }}
+        retention-days: ${{ inputs.report-retention-days }}
+        if-no-files-found: error
+        path: ${{ inputs.working-directory }}/reports/${{ inputs.report-name }}
+
+    - name: Create annotations
+      uses: mikepenz/action-junit-report@v3.0.1
+      if: "!cancelled() && github.actor != 'dependabot[bot]'"
+      with:
+        check_name: PHPUnit
+        report_paths: |
+          ${{ inputs.working-directory }}/reports/${{ inputs.report-name }}
