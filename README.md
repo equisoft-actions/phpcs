@@ -1,0 +1,2 @@
+# phpcs
+phpcs Github Action
