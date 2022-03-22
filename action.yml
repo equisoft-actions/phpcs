@@ -127,8 +127,9 @@ runs:
 
     - name: Create annotations
       uses: mikepenz/action-junit-report@v3.0.1
-      if: "!cancelled() && github.actor != 'dependabot[bot]'"
+      if: "!cancelled()"
       with:
-        check_name: PHPUnit
+        check_name: PHP_CodeSniffer
+        annotate_only: true
         report_paths: |
           ${{ inputs.working-directory }}/reports/${{ inputs.report-name }}
