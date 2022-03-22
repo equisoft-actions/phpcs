@@ -62,7 +62,15 @@ runs:
         REPORTS_PATH=${{ inputs.working-directory }}/reports
         mkdir $REPORTS_PATH
 
-        command_string=(./vendor/bin/phpcs -s --standard=${{ inputs.standard }} --ignore=${{ inputs.ignore }} --extensions=${{ inputs.extensions }} --report-file=$REPORTS_PATH/${{ inputs.report-name }})
+        command_string=(
+          ./vendor/bin/phpcs
+          -s
+          --standard=${{ inputs.standard }}
+          --ignore=${{ inputs.ignore }}
+          --extensions=${{ inputs.extensions }}
+          --report=junit
+          --report-file=$REPORTS_PATH/${{ inputs.report-name }}
+        )
 
         if [ -n "${{ inputs.extra-args }}" ]
         then
