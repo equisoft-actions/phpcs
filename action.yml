@@ -59,7 +59,10 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       shell: bash
       run: |
-        command_string=(./vendor/bin/phpcs -s --standard=${{ inputs.standard }} --ignore=${{ inputs.ignore }} --extensions=${{ inputs.extensions }} --report-file=${{ inputs.working-directory }}/reports/${{ inputs.report-name }})
+        REPORTS_PATH=${{ inputs.working-directory }}/reports
+        mkdir $REPORTS_PATH
+
+        command_string=(./vendor/bin/phpcs -s --standard=${{ inputs.standard }} --ignore=${{ inputs.ignore }} --extensions=${{ inputs.extensions }} --report-file=$REPORTS_PATH/${{ inputs.report-name }})
 
         if [ -n "${{ inputs.extra-args }}" ]
         then
@@ -111,7 +114,7 @@ runs:
       with:
         name: ${{ inputs.report-name }}
         retention-days: ${{ inputs.report-retention-days }}
-        if-no-files-found: error
+        if-no-files-found: ignore
         path: ${{ inputs.working-directory }}/reports/${{ inputs.report-name }}
 
     - name: Create annotations
