@@ -81,6 +81,7 @@ runs:
           CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
           if [[ "$CURRENT_BRANCH" == "${{ inputs.default-branch }}" ]] ; then
             echo "Running phpcs on all files"
+            command_string+=(${{ inputs.paths }})
           else
             # Compute changed files
             if [[ -n "${GITHUB_BASE_REF}" ]]; then
