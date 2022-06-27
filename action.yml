@@ -127,7 +127,7 @@ runs:
         path: ${{ inputs.working-directory }}/reports/${{ inputs.report-name }}
 
     - name: Create annotations
-      uses: mikepenz/action-junit-report@v3.0.3
+      uses: mikepenz/action-junit-report@v3.1.0
       if: "!cancelled()"
       with:
         check_name: PHP_CodeSniffer
