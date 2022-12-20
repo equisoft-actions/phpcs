@@ -38,7 +38,7 @@ inputs:
     description: |
       Run phpcs only on changed files compared to master. Or previous commit for master branch.
     required: false
-    default: false
+    default: 'false'
   changed-files-pattern:
     description: File path pattern.
     default: \.php
@@ -77,7 +77,7 @@ runs:
           command_string+=(${{ inputs.extra-args }})
         fi
 
-        if [[ "${{ inputs.only-changed-files }}" == "yes" ]] ; then
+        if [[ "${{ inputs.only-changed-files }}" == "true" ]] ; then
           CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
           if [[ "$CURRENT_BRANCH" == "${{ inputs.default-branch }}" ]] ; then
             echo "Running phpcs on all files"
