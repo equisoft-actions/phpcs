@@ -118,7 +118,7 @@ runs:
         ${command_string[@]}
 
     - name: Upload report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: "!cancelled()"
       with:
         name: ${{ inputs.report-name }}
