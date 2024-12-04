@@ -59,7 +59,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       shell: bash
       run: |
-        REPORTS_PATH=${{ inputs.working-directory }}/reports
+        REPORTS_PATH=./reports
         mkdir $REPORTS_PATH
 
         command_string=(
