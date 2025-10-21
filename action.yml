@@ -115,6 +115,7 @@ runs:
         fi
 
         echo "Command: " "${command_string[@]}"
+        set +e
         output=`${command_string[@]} 2>&1`
         exit_code=$?
 
