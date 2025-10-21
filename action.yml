@@ -118,7 +118,7 @@ runs:
         output=`${command_string[@]} 2>&1`
         exit_code=$?
 
-        if [ $? != 0 ] && [[ "$output" == "ERROR: No files were checked."* ]]; then
+        if [ $exit_code != 0 ] && [[ "$output" == "ERROR: No files were checked."* ]]; then
           echo "INFO: No files were checked."
           exit 0
         fi
