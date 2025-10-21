@@ -115,7 +115,15 @@ runs:
         fi
 
         echo "Command: " "${command_string[@]}"
-        ${command_string[@]}
+        output=`${command_string[@]} 2>&1`
+
+        if [ $? != 0 ] && [[ "$output" == "ERROR: No files were checked."* ]]; then
+          echo "INFO: No files were checked."
+          exit 0
+        fi
+
+        echo ${output}
+        exit $?
 
     - name: Upload report
       uses: actions/upload-artifact@v4
