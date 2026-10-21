@@ -78,14 +78,15 @@ runs:
         fi
 
         if [[ "${{ inputs.only-changed-files }}" == "true" ]] ; then
+          BASE_REF=${{ github.event.pull_request.base.ref }}
           CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
           if [[ "$CURRENT_BRANCH" == "${{ inputs.default-branch }}" ]] ; then
             echo "Running phpcs on all files"
             command_string+=(${{ inputs.paths }})
           else
             # Compute changed files
-            if [[ -n "${GITHUB_BASE_REF}" ]]; then
-              DIFF_TARGET="origin/$GITHUB_BASE_REF..."
+            if [[ -n "${BASE_REF}" ]]; then
+              DIFF_TARGET="origin/$BASE_REF..."
             else
               DIFF_TARGET="origin/${{ inputs.default-branch }}..."
             fi
@@ -99,14 +100,14 @@ runs:
             CHANGED_FILES=$(git diff $DIFF_TARGET --diff-filter=AM --name-only --no-color | grep -e "${{ inputs.changed-files-pattern }}" || :)
             NUM_CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -v -e '^\s*$' | wc -l || :)
             if [[ $NUM_CHANGED_FILES -le 0 ]] ; then
-              echo "No file changes. Skip psalm."
+              echo "No file changes. Skip phpcs."
               exit 0
             elif [[ $NUM_CHANGED_FILES -le ${{ inputs.changed-files-threshold }} ]] ; then
               echo "Running phpcs on changed files"
               echo "$CHANGED_FILES"
               command_string+=($CHANGED_FILES)
             else
-              echo "Running psalm on all files"
+              echo "Running phpcs on all files"
               command_string+=(${{ inputs.paths }})
             fi
           fi
